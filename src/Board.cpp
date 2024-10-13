@@ -134,7 +134,8 @@ bool Board::hasPlayerWon(int player) {
     return false;
 }
 
-int Board::numberWinPossibilities(int opponent_player) {
+int Board::numberWinPossibilities(int player) {
+    int opponent_player = player%2+1;
     int number_of_possibilites = 69; // Total number of winning checkers position
     // Check for all possible winning conditions if there is a checker of the opponent that would prevent winning this way
     for (int j = 0; j < 4; j++) {
@@ -168,7 +169,19 @@ int Board::numberWinPossibilities(int opponent_player) {
     return number_of_possibilites;
 }
 
+int Board::numberOfWinPossibilitiesPrevented(int player, int col) {
+    // The maximum value is 12, the minimum is 0
+    int opponent_player = player%2+1; 
+    int current_number_wins_possibilities_for_opponent = numberWinPossibilities(opponent_player);
+    Board board_for_future = clone();
+    board_for_future.makeMove(player, col);
+    int potential_number_wins_for_opponent = board_for_future.numberWinPossibilities(opponent_player);
+    int number_of_wins_removed = current_number_wins_possibilities_for_opponent - potential_number_wins_for_opponent;
+    return number_of_wins_removed;
+}
+
 int Board::numberOfConnectivitiesGenerated(int player, int col) {
+    // The maximum value is 7, the minimum is 0
     int row = getFirstZeroInCol(col);
     int number_of_connectivities = 0;
     for (int r=row-1; r<row+2; r++) {
@@ -183,13 +196,21 @@ int Board::numberOfConnectivitiesGenerated(int player, int col) {
     return number_of_connectivities;
 }
 
-int Board::numberOfWinPossibilitiesDestroyed(int player, int col) {
-    int current_number_wins_possibilities_for_opponent = numberWinPossibilities(player);
-    Board board_for_future = clone();
-    board_for_future.makeMove(player, col);
-    int potential_number_wins_for_opponent = board_for_future.numberWinPossibilities(player);
-    int number_of_wins_removed = current_number_wins_possibilities_for_opponent - potential_number_wins_for_opponent;
-    return number_of_wins_removed;
+int Board::numberOfConnectivitiesPrevented(int player, int col) {
+    // The maximum value is 7, the minimum is 0
+    int opponent_player = player%2+1;
+    int row = getFirstZeroInCol(col);
+    int number_of_connectivities_prevented = 0;
+    for (int r=row-1; r<row+2; r++) {
+        for (int c=col-1; c<col+2; c++) {
+            if (r>0 && r<6 && c>0 && c<7) {
+                if (board[r][c] == opponent_player) {
+                    number_of_connectivities_prevented++;
+                }
+            }
+        }
+    }
+    return number_of_connectivities_prevented;
 }
 
 void Board::displayBoard() {

@@ -21,12 +21,16 @@ int main() {
     gameBoard.makeMove(2, 6);
     gameBoard.displayBoard();
 
-    // int i = gameBoard.numberOfConnectivitiesGenerated(1, 3);
-    // cout << i << endl;
-    // int number_of_possibilites = gameBoard.numberWinPossibilities(2);
-    // cout << number_of_possibilites << endl;
+    int i = gameBoard.numberOfConnectivitiesGenerated(2, 3);
+    cout << i << endl;    
+    
+    int j = gameBoard.numberOfConnectivitiesPrevented(2, 3);
+    cout << j << endl;
 
-    int number_destroyed = gameBoard.numberOfWinPossibilitiesDestroyed(2, 6);    
+    int number_of_possibilites = gameBoard.numberWinPossibilities(2);
+    cout << number_of_possibilites << endl;
+
+    int number_destroyed = gameBoard.numberOfWinPossibilitiesPrevented(2, 4);    
     cout << number_destroyed << endl;
     return 0;
 }

@@ -24,9 +24,10 @@ public:
     void displayBoard();
     string getStateRepresentation(); // puts the state of the board in a string
     vector<int> getValidActions(); // returns the list of indices of columns where a player can still play
-    int numberWinPossibilities(int opponent_player); // number of winning situations for the player that isn't opponent_player
-    int numberOfWinPossibilitiesDestroyed(int player, int col); // returns the number of possibilities of winning that playing in col would take away
+    int numberWinPossibilities(int player); // number of winning situations for the player that isn't opponent_player
+    int numberOfWinPossibilitiesPrevented(int player, int col); // returns the number of possibilities of winning that playing in col would take away
     int numberOfConnectivitiesGenerated(int player, int col);
+    int numberOfConnectivitiesPrevented(int player, int col);
 };
 
 #endif // BOARD_H
