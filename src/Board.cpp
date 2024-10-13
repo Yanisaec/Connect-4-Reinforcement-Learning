@@ -1,6 +1,9 @@
 #include "Board.h"
 #include <iostream>
 #include <stdexcept>
+#include <sstream>
+#include <string>
+#include <vector>
 
 // Constructor
 Board::Board() {
@@ -122,4 +125,14 @@ void Board::displayBoard() {
         }
         std::cout << "|" << std::endl;
     }
+}
+
+std::string Board::getStateRepresentation() {
+    std::stringstream ss;
+    for (int row = 0; row < 6; row++) {
+        for (int col = 0; col < 7; col++) {
+            ss << board[row][col]; // Append the player ID (0, 1, or 2)
+        }
+    }
+    return ss.str();
 }

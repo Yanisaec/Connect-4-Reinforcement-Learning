@@ -1,5 +1,6 @@
 #ifndef BOARD_H
 #define BOARD_H
+#include <string>
 
 class Board {
 private:
@@ -16,6 +17,7 @@ public:
     bool isBoardFull();
     bool hasPlayerWon(int player);
     void displayBoard();
+    std::string getStateRepresentation();
 };
 
 #endif // BOARD_H
