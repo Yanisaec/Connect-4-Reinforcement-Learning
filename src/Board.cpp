@@ -5,9 +5,24 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 // Constructor
 Board::Board() {
     resetBoard();
+}
+
+Board::Board(const Board& other) {
+        for (int row = 0; row < 6; row++) {
+            for (int col = 0; col < 7; col++) {
+                board[row][col] = other.board[row][col];
+            }
+        }
+    }
+
+// Method to clone the board
+Board Board::clone() const {
+    return Board(*this);
 }
 
 void Board::resetBoard() {
@@ -26,7 +41,7 @@ void Board::makeMove(int player, int col) {
 int Board::getFirstZeroInCol(int col) {
     checkColumn(col);
     if (numberCheckersInCol(col) == 6) {
-        throw std::invalid_argument("received full column as input");
+        throw invalid_argument("received full column as input");
     }
     for (int row = 5; row >= 0; row--) {
         if (board[row][col] == 0) {
@@ -39,6 +54,16 @@ int Board::getFirstZeroInCol(int col) {
 bool Board::isValidMove(int col) {
     checkColumn(col);
     return numberCheckersInCol(col) != 6;
+}
+
+vector<int> Board::getValidActions() {
+    vector<int> valid_actions;
+    for (int col=0; col<7; col++) {
+        if (isValidMove(col)) {
+            valid_actions.push_back(col);
+        }
+    }
+    return valid_actions;
 }
 
 int Board::numberCheckersInCol(int col) {
@@ -54,7 +79,7 @@ int Board::numberCheckersInCol(int col) {
 
 void Board::checkColumn(int col) {
     if (col < 0 || col > 6) {
-        throw std::invalid_argument("col out of bounds (0-6 allowed)");
+        throw invalid_argument("col out of bounds (0-6 allowed)");
     }
 }
 
@@ -109,26 +134,84 @@ bool Board::hasPlayerWon(int player) {
     return false;
 }
 
+int Board::numberWinPossibilities(int opponent_player) {
+    int number_of_possibilites = 69; // Total number of winning checkers position
+    // Check for all possible winning conditions if there is a checker of the opponent that would prevent winning this way
+    for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < 6; i++) {
+            if (board[i][j] == opponent_player || board[i][j + 1] == opponent_player || board[i][j + 2] == opponent_player || board[i][j + 3] == opponent_player) {
+                number_of_possibilites--;
+            }
+        }
+    }
+    for (int j = 0; j < 7; j++) {
+        for (int i = 0; i < 3; i++) {
+            if (board[i][j] == opponent_player || board[i + 1][j] == opponent_player || board[i + 2][j] == opponent_player || board[i + 3][j] == opponent_player) {
+                number_of_possibilites--;
+            }
+        }
+    }
+    for (int i = 3; i < 6; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (board[i][j] == opponent_player || board[i - 1][j + 1] == opponent_player || board[i - 2][j + 2] == opponent_player || board[i - 3][j + 3] == opponent_player) {
+                number_of_possibilites--;
+            }
+        }
+    }
+    for (int i = 3; i < 6; i++) {
+        for (int j = 3; j < 7; j++) {
+            if (board[i][j] == opponent_player || board[i - 1][j - 1] == opponent_player || board[i - 2][j - 2] == opponent_player || board[i - 3][j - 3] == opponent_player) {
+                number_of_possibilites--;
+            }
+        }
+    }
+    return number_of_possibilites;
+}
+
+int Board::numberOfConnectivitiesGenerated(int player, int col) {
+    int row = getFirstZeroInCol(col);
+    int number_of_connectivities = 0;
+    for (int r=row-1; r<row+2; r++) {
+        for (int c=col-1; c<col+2; c++) {
+            if (r>0 && r<6 && c>0 && c<7) {
+                if (board[r][c] == player) {
+                    number_of_connectivities++;
+                }
+            }
+        }
+    }
+    return number_of_connectivities;
+}
+
+int Board::numberOfWinPossibilitiesDestroyed(int player, int col) {
+    int current_number_wins_possibilities_for_opponent = numberWinPossibilities(player);
+    Board board_for_future = clone();
+    board_for_future.makeMove(player, col);
+    int potential_number_wins_for_opponent = board_for_future.numberWinPossibilities(player);
+    int number_of_wins_removed = current_number_wins_possibilities_for_opponent - potential_number_wins_for_opponent;
+    return number_of_wins_removed;
+}
+
 void Board::displayBoard() {
     for (int row = 0; row < 6; row++) {
-        std::cout << "|";
+        cout << "|";
         for (int col = 0; col < 7; col++) {
             if (board[row][col] == 1) {
-                std::cout << "[X]";
+                cout << "[X]";
             } else if (board[row][col] == 2) {
-                std::cout << "[O]";
+                cout << "[O]";
             } else {
-                std::cout << "[ ]";
+                cout << "[ ]";
             }
 
-            if (col < 6) std::cout << ",";
+            if (col < 6) cout << ",";
         }
-        std::cout << "|" << std::endl;
+        cout << "|" << endl;
     }
 }
 
-std::string Board::getStateRepresentation() {
-    std::stringstream ss;
+string Board::getStateRepresentation() {
+    stringstream ss;
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
             ss << board[row][col]; // Append the player ID (0, 1, or 2)
