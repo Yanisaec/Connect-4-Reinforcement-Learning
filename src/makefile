@@ -8,7 +8,7 @@ CXXFLAGS = -Wall -Wextra -std=c++11
 TARGET = connect4
 
 # Define the source files
-SRCS = main.cpp Board.cpp
+SRCS = Board.cpp Agent.cpp Trainer.cpp main.cpp
 
 # Define the object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)

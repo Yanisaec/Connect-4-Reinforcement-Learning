@@ -1,36 +1,25 @@
 #include "Board.h"
+#include "Agent.h"
+#include "Trainer.h"
+#include "chrono"
 #include <iostream>
 
 using namespace std;
 
 int main() {
-    Board gameBoard;
-    
-    gameBoard.makeMove(1, 0);
-    gameBoard.makeMove(2, 1);
-    gameBoard.makeMove(1, 0);
-    gameBoard.makeMove(2, 1);
-    gameBoard.makeMove(1, 2);
-    gameBoard.makeMove(1, 2);
-    gameBoard.makeMove(1, 2);
-    gameBoard.makeMove(1, 2);
-    gameBoard.makeMove(1, 3);
-    gameBoard.makeMove(1, 4);
-    gameBoard.makeMove(2, 4);
-    gameBoard.makeMove(1, 4);
-    gameBoard.makeMove(2, 6);
-    gameBoard.displayBoard();
+    srand(time(0)); 
 
-    int i = gameBoard.numberOfConnectivitiesGenerated(2, 3);
-    cout << i << endl;    
-    
-    int j = gameBoard.numberOfConnectivitiesPrevented(2, 3);
-    cout << j << endl;
+    Trainer trainer;
+    string file1 = "agent1_qtable.csv";
+    string file2 = "agent2_qtable.csv";
 
-    int number_of_possibilites = gameBoard.numberWinPossibilities(2);
-    cout << number_of_possibilites << endl;
+    auto start = chrono::high_resolution_clock::now();
+    trainer.train(5000, file1, file2);
+    auto end = chrono::high_resolution_clock::now();
 
-    int number_destroyed = gameBoard.numberOfWinPossibilitiesPrevented(2, 4);    
-    cout << number_destroyed << endl;
+    chrono::duration<double> duration = end - start;
+
+    cout << "Training took: " << duration.count() << " seconds" << endl;
+
     return 0;
 }
