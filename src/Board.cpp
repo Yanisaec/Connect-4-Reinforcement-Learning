@@ -231,6 +231,99 @@ void Board::displayBoard() {
     }
 }
 
+int Board::numberConnect4Prevented(int player, int col) {
+    int opponent = player % 2 + 1;
+    int nbPrevented = 0;
+    int row = getFirstZeroInCol(col);
+
+    // Diagonal: bottom-left to top-right (\ direction)
+    for (int start = -3; start <= 0; start++) {
+        int count_opponent = 0;
+        for (int i = 0; i < 4; i++) {
+            int r = row + start + i;
+            int c = col + start + i;
+            if (r >= 0 && r < 6 && c >= 0 && c < 7) {
+                if (board[r][c] == opponent) {
+                    count_opponent++;
+                } else if (r == row && c == col) {
+                    // This is the new move position; ignore it for the count
+                    continue;
+                } else {
+                    break; // Not continuous
+                }
+            }
+        }
+        if (count_opponent == 3) {
+            nbPrevented++;
+        }
+    }
+
+    // Diagonal: top-left to bottom-right (/ direction)
+    for (int start = -3; start <= 0; start++) {
+        int count_opponent = 0;
+        for (int i = 0; i < 4; i++) {
+            int r = row - start - i;
+            int c = col + start + i;
+            if (r >= 0 && r < 6 && c >= 0 && c < 7) {
+                if (board[r][c] == opponent) {
+                    count_opponent++;
+                } else if (r == row && c == col) {
+                    // This is the new move position; ignore it for the count
+                    continue;
+                } else {
+                    break; // Not continuous
+                }
+            }
+        }
+        if (count_opponent == 3) {
+            nbPrevented++;
+        }
+    }
+
+    // Horizontal: left to right (--- direction)
+    for (int start = -3; start <= 0; start++) {
+        int count_opponent = 0;
+        for (int i = 0; i < 4; i++) {
+            int c = col + start + i;
+            if (c >= 0 && c < 7) {
+                if (board[row][c] == opponent) {
+                    count_opponent++;
+                } else if (c == col) {
+                    continue; // Ignore the current move
+                } else {
+                    break; // Not continuous
+                }
+            }
+        }
+        if (count_opponent == 3) {
+            nbPrevented++;
+        }
+    }
+
+    // Vertical: top to bottom (| direction)
+    for (int start = -3; start <= 0; start++) {
+        int count_opponent = 0;
+        for (int i = 0; i < 4; i++) {
+            int r = row + start + i;
+            if (r >= 0 && r < 6) {
+                if (board[r][col] == opponent) {
+                    count_opponent++;
+                } else if (r == row) {
+                    continue; // Ignore the current move
+                } else {
+                    break; // Not continuous
+                }
+            }
+        }
+        if (count_opponent == 3) {
+            nbPrevented++;
+        }
+    }
+
+    return nbPrevented;
+}
+
+
 string Board::getStateRepresentation() {
     stringstream ss;
     for (int row = 0; row < 6; row++) {

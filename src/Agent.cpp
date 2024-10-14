@@ -23,24 +23,33 @@ double Agent::calculateReward(Board& board_before_playing, int col) {
 
     int potential_future_connectivities_generated = 0;
     int potential_future_connectivites_generated_for_opponent = 0;
+    int potential_winning_offered = 0;
     // check how many connectivities the agent will be able to generate by above the checker he played
     if (board_after_playing.isValidMove(col)) {
         potential_future_connectivities_generated = board_after_playing.numberOfConnectivitiesGenerated(player_ID, col);
         potential_future_connectivites_generated_for_opponent = board_after_playing.numberOfConnectivitiesGenerated(opponent_player, col);
+        potential_winning_offered = board_after_playing.numberConnect4Prevented(player_ID, col);
+    }
+    if (potential_winning_offered !=0) {
+        return -50;
     }
         
-    int prevented_wins = board_before_playing.numberOfWinPossibilitiesPrevented(player_ID, col);
+    int prevented_wins_placements = board_before_playing.numberOfWinPossibilitiesPrevented(player_ID, col);
     int connectivities_prevented = board_before_playing.numberOfConnectivitiesPrevented(player_ID, col);
     int connectivities_generated = board_before_playing.numberOfConnectivitiesGenerated(player_ID, col);
+    int number_connect4_prevented = board_before_playing.numberConnect4Prevented(player_ID, col);
+    if (number_connect4_prevented !=0) {
+        return 50;
+    }
 
-    double prevented_wins_normalized = prevented_wins / 12.0;
+    double prevented_wins_placements_normalized = prevented_wins_placements / 12.0;
     double connectivites_prevented_normalized = connectivities_prevented / 7.0;
     double connectivities_generated_normalized = connectivities_generated / 7.0;
     double potential_future_connectivities_generated_normalized = potential_future_connectivities_generated / 7.0;
     double potential_future_connectivites_generated_for_opponent_normalized = potential_future_connectivites_generated_for_opponent / 7.0;
 
-    double reward = (2*connectivities_generated_normalized + connectivites_prevented_normalized + prevented_wins_normalized
-    + 2*potential_future_connectivities_generated_normalized - potential_future_connectivites_generated_for_opponent_normalized) / 7;
+    double reward = (connectivities_generated_normalized + connectivites_prevented_normalized + prevented_wins_placements_normalized
+    + potential_future_connectivities_generated_normalized - potential_future_connectivites_generated_for_opponent_normalized);
 
     // Penalize unproductive moves
     // if (reward < 1) {  // maximum reward is 5
@@ -51,7 +60,7 @@ double Agent::calculateReward(Board& board_before_playing, int col) {
 }
 
 
-int Agent::chooseAction(Board& board) {
+int Agent::chooseAction(Board& board, bool training) {
     string current_state = board.getStateRepresentation();
     vector<int> valid_actions = board.getValidActions();
     int random_index;
@@ -65,7 +74,7 @@ int Agent::chooseAction(Board& board) {
     }
 
     // Epsilon-greedy action to encourage discovery
-    if ((rand() / static_cast<double>(RAND_MAX)) < exploration_rate) {
+    if (training && (rand() / static_cast<double>(RAND_MAX)) < exploration_rate) {
         // Chose random valid action
         random_index = rand() % valid_actions.size();
         return valid_actions[random_index];
