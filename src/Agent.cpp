@@ -21,6 +21,28 @@ double Agent::calculateReward(Board& board_before_playing, int col) {
         return 100;  // High positive reward for winning
     }
 
+    for (int i=0; i<7; i++){
+        Board test_board_opponent = board_before_playing.clone();
+        Board test_board_agent = board_before_playing.clone();
+        if (test_board_opponent.isValidMove(i)){
+            test_board_agent.makeMove(player_ID, i);
+            if (test_board_agent.hasPlayerWon(player_ID)) {
+                return -100; // missed an opportunity to win
+            }
+            if (i!=col) {
+                test_board_opponent.makeMove(opponent_player, i);
+                if (test_board_opponent.hasPlayerWon(opponent_player)) {
+                    return -100; // missed the opportunity to block a connect 4
+                }
+            } else {
+                test_board_opponent.makeMove(opponent_player, i);
+                if (test_board_opponent.hasPlayerWon(opponent_player)) {
+                    return 50; // blocked a connect 4
+                }
+            }
+        }
+    }
+
     int potential_future_connectivities_generated = 0;
     int potential_future_connectivites_generated_for_opponent = 0;
     int potential_winning_offered = 0;
@@ -49,7 +71,7 @@ double Agent::calculateReward(Board& board_before_playing, int col) {
     double potential_future_connectivites_generated_for_opponent_normalized = potential_future_connectivites_generated_for_opponent / 7.0;
 
     double reward = (connectivities_generated_normalized + connectivites_prevented_normalized + prevented_wins_placements_normalized
-    + potential_future_connectivities_generated_normalized - potential_future_connectivites_generated_for_opponent_normalized);
+    + potential_future_connectivities_generated_normalized - potential_future_connectivites_generated_for_opponent_normalized)*10;
 
     // Penalize unproductive moves
     // if (reward < 1) {  // maximum reward is 5
@@ -61,7 +83,7 @@ double Agent::calculateReward(Board& board_before_playing, int col) {
 
 
 int Agent::chooseAction(Board& board, bool training) {
-    string current_state = board.getStateRepresentation();
+    uint64_t current_state = board.getStateRepresentation();
     vector<int> valid_actions = board.getValidActions();
     int random_index;
 
@@ -69,6 +91,13 @@ int Agent::chooseAction(Board& board, bool training) {
     if (qTable.find(current_state) == qTable.end()) {
         // If it has not already been encoutered, set a random value
         qTable[current_state] = vector<double>(7, 0.0);
+        if (rand() / static_cast<double>(RAND_MAX) > 0.5) {
+            vector<int> top_moves = board.getTopMoves(player_ID);
+            if (top_moves.size() > 0) {
+                random_index = rand() % top_moves.size();
+                return top_moves[random_index];
+            }
+        }
         random_index = rand() % valid_actions.size();
         return valid_actions[random_index];
     }
@@ -93,7 +122,7 @@ int Agent::chooseAction(Board& board, bool training) {
     return best_action;
 }
 
-void Agent::updateQTable(string prevState, int action, double reward, string newState) {
+void Agent::updateQTable(uint64_t prevState, int action, double reward, uint64_t newState) {
     double currentQvalue = qTable[prevState][action];
     double maxFutureQvalue;
     if (qTable.find(newState) == qTable.end()) {
@@ -110,17 +139,18 @@ void Agent::saveQTable(const string& filename) {
     ofstream outFile(filename);
     if (outFile.is_open()) {
         for (const auto& entry : qTable) {
-            outFile << entry.first; 
+            outFile << entry.first;  // Save the uint64_t state as is (numeric representation)
             for (double qValue : entry.second) {
-                outFile << "," << qValue; 
+                outFile << "," << qValue;  // Save Q-values separated by commas
             }
-            outFile << "\n"; 
+            outFile << "\n";  // Newline after each state entry
         }
         outFile.close();
     } else {
         cerr << "Unable to open file for writing." << endl;
     }
 }
+
 
 void Agent::loadQTable(const string& filename) {
     ifstream inFile(filename);
@@ -129,15 +159,51 @@ void Agent::loadQTable(const string& filename) {
     if (inFile.is_open()) {
         while (getline(inFile, line)) {
             stringstream ss(line);
-            string state;
-            getline(ss, state, ',');  
+            uint64_t state;
+            ss >> state;  // Read the uint64_t state (no comma before the first element)
+
+            if (ss.peek() == ',') ss.ignore();  // Skip the comma before Q-values
 
             vector<double> qValues;
             string qValue;
             while (getline(ss, qValue, ',')) {
-                qValues.push_back(stod(qValue));
+                qValues.push_back(stod(qValue));  // Convert and store each Q-value
             }
 
+            qTable[state] = qValues;  // Insert the state and corresponding Q-values into the map
+        }
+        inFile.close();
+    } else {
+        cerr << "Unable to open file for reading." << endl;
+    }
+}
+
+// Save the Q-table in binary format
+void Agent::saveQTableBinary(const string& filename) {
+    ofstream outFile(filename, ios::binary);
+    if (outFile.is_open()) {
+        for (const auto& entry : qTable) {
+            outFile.write(reinterpret_cast<const char*>(&entry.first), sizeof(entry.first));  // Write uint64_t state
+            for (double qValue : entry.second) {
+                outFile.write(reinterpret_cast<const char*>(&qValue), sizeof(qValue));  // Write Q-value
+            }
+        }
+        outFile.close();
+    } else {
+        cerr << "Unable to open file for writing." << endl;
+    }
+}
+
+// Load the Q-table from binary format
+void Agent::loadQTableBinary(const string& filename) {
+    ifstream inFile(filename, ios::binary);
+    if (inFile.is_open()) {
+        uint64_t state;
+        vector<double> qValues(7);  // Assuming 7 possible actions (adjust if necessary)
+        while (inFile.read(reinterpret_cast<char*>(&state), sizeof(state))) {
+            for (int i = 0; i < 7; i++) {
+                inFile.read(reinterpret_cast<char*>(&qValues[i]), sizeof(double));
+            }
             qTable[state] = qValues;
         }
         inFile.close();

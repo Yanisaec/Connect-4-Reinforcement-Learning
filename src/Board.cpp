@@ -51,6 +51,27 @@ int Board::getFirstZeroInCol(int col) {
     return -1;
 }
 
+int Board::getTopPlayer(int col) {
+    checkColumn(col);
+    for (int row=0; row<6; row++) {
+        if (board[row][col] != 0) {
+            return board[row][col];
+        }
+    }
+    return 0;
+}
+
+vector<int> Board::getTopMoves(int player) {
+    int opponent = player%2+1;
+    vector<int> top_moves;
+    for (int col=0; col<7; col++) {
+        if (getTopPlayer(col) == opponent && isValidMove(col)) {
+            top_moves.push_back(col);
+        }
+    }
+    return top_moves;
+}
+
 bool Board::isValidMove(int col) {
     checkColumn(col);
     return numberCheckersInCol(col) != 6;
@@ -225,7 +246,7 @@ void Board::displayBoard() {
                 cout << "[ ]";
             }
 
-            if (col < 6) cout << ",";
+            // if (col < 6) cout << ",";
         }
         cout << "|" << endl;
     }
@@ -324,12 +345,15 @@ int Board::numberConnect4Prevented(int player, int col) {
 }
 
 
-string Board::getStateRepresentation() {
-    stringstream ss;
+uint64_t Board::getStateRepresentation() {
+    uint64_t state = 0;
+    uint64_t factor = 1; // Each position contributes 3^i to the final state
+    
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
-            ss << board[row][col]; // Append the player ID (0, 1, or 2)
+            state += board[row][col] * factor; // Multiply player ID by the factor (3^i)
+            factor *= 3; // Move to the next base-3 place value
         }
     }
-    return ss.str();
+    return state;
 }

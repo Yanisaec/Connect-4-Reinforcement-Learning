@@ -21,18 +21,20 @@ void Trainer::train(int nb_games, string filename1, string filename2) {
     int last_action2;
     double reward1;
     double reward2;
-    string board_state;
-    string board_state_after_1;
-    string last_board_state_after_1;
-    string board_state_after_2;
+    uint64_t board_state;
+    uint64_t board_state_after_1;
+    uint64_t last_board_state_after_1;
+    uint64_t board_state_after_2;
     for (int game=0; game<nb_games; game++) {
-        if (game%50000 == 0) {
-            cout << game << " games played yet" << endl;
+        if (game%500000 == 0) {
+            cout << game << " games played" << endl;
         }
         Board gameBoard;
         bool stop = false;
         bool agent1_won = false;
+        bool just_started = true;
         while (!gameBoard.isBoardFull() && !stop) {
+            
             last_action2 = action2;
             last_board_state_after_1 = board_state_after_1;
 
@@ -43,10 +45,14 @@ void Trainer::train(int nb_games, string filename1, string filename2) {
             gameBoard.makeMove(1, action1);
             board_state_after_1 = gameBoard.getStateRepresentation();
 
+            if (!agent1_won && !just_started) {
+                agent2.updateQTable(last_board_state_after_1, action2, reward2, board_state_after_1);
+            } 
+
             if (gameBoard.hasPlayerWon(1)) {
                 // cout << "Agent 1 has won" << endl;
                 reward2 = -100;
-                agent2.updateQTable(last_board_state_after_1, last_action2, reward2, board_state);
+                agent2.updateQTable(last_board_state_after_1, last_action2, reward2, board_state_after_1);
                 agent1_won = true;
                 stop = true;
             }
@@ -59,17 +65,13 @@ void Trainer::train(int nb_games, string filename1, string filename2) {
             if (gameBoard.hasPlayerWon(2)) {
                 // cout << "Agent 2 has won" << endl;
                 reward1 = -100;
-                agent1.updateQTable(board_state, action1, reward1, board_state_after_1);
+                agent1.updateQTable(board_state, action1, reward1, board_state_after_2);
                 stop = true;
             }
 
             if (!stop) {
-                agent1.updateQTable(board_state, action1, reward1, board_state_after_1);
+                agent1.updateQTable(board_state, action1, reward1, board_state_after_2);
             }
-
-            if (!agent1_won) {
-            agent2.updateQTable(board_state_after_1, action2, reward2, board_state_after_2);
-            } 
         }
         // gameBoard.displayBoard();
         if (agent1_won) {
@@ -78,9 +80,10 @@ void Trainer::train(int nb_games, string filename1, string filename2) {
         else if (gameBoard.isBoardFull()) {
             draws++;
         }
+        just_started = false;
     }
-    agent1.saveQTable(filename1);
-    agent2.saveQTable(filename2);
     cout << wins << endl;
     cout << draws << endl;
+    agent1.saveQTableBinary(filename1);
+    agent2.saveQTableBinary(filename2);
 }
